@@ -1,0 +1,2 @@
+# VIVO_TWRP_TREE
+ only for PD1728F
