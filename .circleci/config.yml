@@ -1,5 +1,5 @@
 os: linux
-dist: focal
+ dist: focal
 group: edge
 language: generic
 git:
@@ -70,3 +70,6 @@ deploy:
 branches:
   only:
     - master # Set travis builder branch(es) names
+  except:
+    - /^(?i:untagged)-.*$/
+    - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
