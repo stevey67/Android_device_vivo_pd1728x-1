@@ -35,11 +35,16 @@ TARGET_2ND_CPU_VARIANT := generic
 TARGET_BOARD_SUFFIX := _64
 TARGET_USES_64_BIT_BINDER := true
 
+# Others 64-bit flags
+TARGET_BOARD_SUFFIX := _64
+TARGET_USES_64_BIT_BINDER := true
+
 # Assert
 TARGET_OTA_ASSERT_DEVICE := PD1728F_EX
 
 # File systems
 BOARD_HAS_LARGE_FILESYSTEM := true
+
 #BOARD_RECOVERYIMAGE_PARTITION_SIZE := 56456488 # This is the maximum known partition size, but it can be higher, so we just omit it
 BOARD_SYSTEMIMAGE_PARTITION_TYPE := ext4
 BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := ext4
@@ -64,6 +69,17 @@ TARGET_KERNEL_HEADER_ARCH := arm64
 TARGET_KERNEL_SOURCE := kernel/vivo/PD1728F_EX
 TARGET_KERNEL_CONFIG := PD1728F_EX_defconfig
 
+# Prebuilt: Kernel
+BOARD_KERNEL_IMAGE_NAME := Image.gz-dtb
+TARGET_PREBUILT_KERNEL := $(DEVICE_PATH)/prebuilt/Image.gz-dtb
+
+# System as root
+BOARD_BUILD_SYSTEM_ROOT_IMAGE := true
+
+# File systems: Out dir
+TARGET_COPY_OUT_VENDOR := vendor
+TARGET_COPY_OUT_PRODUCT := product
+
 # Platform
 TARGET_BOARD_PLATFORM := sdm660
 
@@ -77,3 +93,8 @@ TW_EXTRA_LANGUAGES := true
 TW_SCREEN_BLANK_ON_BOOT := true
 TW_INPUT_BLACKLIST := "hbtp_vm"
 TW_USE_TOOLBOX := true
+TW_HAS_DOWNLOAD_MODE := true
+TW_INCLUDE_NTFS_3G := true
+TW_EXCLUDE_SUPERSU := true
+TW_EXTRA_LANGUAGES := true
+TW_USE_NEW_MINADBD := true
