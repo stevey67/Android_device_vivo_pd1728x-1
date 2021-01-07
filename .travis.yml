@@ -1,3 +1,4 @@
+pip install yamllint
 os: linux
 dist: focal
 group: edge
