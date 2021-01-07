@@ -1,45 +1,75 @@
-install:
-  - sudo apt-get install -y g++ zlib1g-dev build-essential git python time gawk gettext unzip file libssl-dev wget gcc flex bison libz-dev libncurses-dev make
-  - sudo apt install -y ccache automake lzop gperf build-essential zip curl zlib1g-dev zlib1g-dev g++-multilib python-networkx libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng
-  
-language: java
-dist: trusty
-jdk:
-  - openjdk8
-- os: linux
-cache: ccache
-compiler:
-  - clang
-  - gcc
+os: linux
+dist: focal
+group: edge
+language: generic
+git:
+  depth: 1
 addons:
   apt:
-    update: true
-    sources:
-      - llvm-toolchain-trusty-5.0
+    update:
+      - true
     packages:
-      - oracle-java8-installer
-      - clang-5.0
-env:
-  - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
-  global:
-    - MAKEFLAGS="-j 2"
-sudo: false
+      - aria2
+      - zstd
+      - xz-utils
+services:
+  - docker
+before_install:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin 2>/dev/null
+  - docker pull fr3akyphantom/droid-builder:latest
+before_script:
+  - cd $HOME && mkdir twrp
+  # Download the TWRP Compressed Source Files from PhantomZone54's Release
+  # > More on https://github.com/PhantomZone54/twrp_sources_norepo/releases/latest
+  # Uncomment & Use below line If Building for Lollipop-based Devices
+  # - TWRP_SOURCE="https://github.com/PhantomZone54/twrp_sources_norepo/releases/download/v3.4.0-20201103/MinimalOmniRecovery-twrp-5.1-norepo-20201103.tzst"
+  # Use below line If Building for Marshmallow-based Devices
+  - TWRP_SOURCE="https://github.com/PhantomZone54/twrp_sources_norepo/releases/download/v3.4.0-20201103/MinimalOmniRecovery-twrp-6.0-norepo-20201103.tzst"
+  # Uncomment & Use below line If Building for Nougat-based Devices
+  # - TWRP_SOURCE="https://github.com/PhantomZone54/twrp_sources_norepo/releases/download/v3.4.0-20201103/MinimalOmniRecovery-twrp-7.1-norepo-20201103.tzst"
+  - aria2c -x16 -s8 --console-log-level=error --summary-interval=0 "${TWRP_SOURCE}" -o twrp.tzst || wget -q --show-progress --progress=bar:force "${TWRP_SOURCE}" -O twrp.tzst
+  - tar --zstd -xf twrp.tzst --directory $HOME/twrp/ && rm twrp.tzst
+  # If Building for Oreo-based Devices
+  # - TWRP_SOURCE1="https://github.com/PhantomZone54/twrp_sources_norepo/releases/download/v3.4.0-20201103/MinimalOmniRecovery-twrp-8.1-norepo-20201103.tzst.aa" && TWRP_SOURCE2="https://github.com/PhantomZone54/twrp_sources_norepo/releases/download/v3.4.0-20201103/MinimalOmniRecovery-twrp-8.1-norepo-20201103.tzst.ab"
+  # If Building for Oreo-based Devices
+  # - TWRP_SOURCE1="https://github.com/PhantomZone54/twrp_sources_norepo/releases/download/v3.4.0-20201103/MinimalOmniRecovery-twrp-9.0-norepo-20201103.tzst.aa" && TWRP_SOURCE2="https://github.com/PhantomZone54/twrp_sources_norepo/releases/download/v3.4.0-20201103/MinimalOmniRecovery-twrp-9.0-norepo-20201103.tzst.ab" && TWRP_SOURCE3="https://github.com/PhantomZone54/twrp_sources_norepo/releases/download/v3.4.0-20201103/MinimalOmniRecovery-twrp-9.0-norepo-20201103.tzst.ac" && TWRP_SOURCE4="https://github.com/PhantomZone54/twrp_sources_norepo/releases/download/v3.4.0-20201103/MinimalOmniRecovery-twrp-9.0-norepo-20201103.tzst.ad"
+  # Then uncomment below lines to download & extract the multi-part files
+  # - aria2c -x16 -s8 --console-log-level=error --summary-interval=0 "${TWRP_SOURCE1}" "${TWRP_SOURCE2}" "${TWRP_SOURCE3}" "${TWRP_SOURCE4}" || wget -q --show-progress --progress=bar:force "${TWRP_SOURCE1}" "${TWRP_SOURCE2}" "${TWRP_SOURCE3}" "${TWRP_SOURCE4}"
+  # - tar --zstd -xf MinimalOmniRecovery-twrp-*.*-norepo-2020*.tzst.aa --directory $HOME/twrp/ && rm MinimalOmniRecovery*.tzst.*
 script:
-  - jdk_switcher use openjdk8
-  - while sleep 9m; do echo "=====[ $SECONDS seconds build still running ]====="; done &
-  - bash build-twrp.sh
-before_deploy:
-  - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d-%H%M')}
-  - export RELEASE_NAME=TWRP-Realme-3
-  - git tag $TRAVIS_TAG
+  # Replace your ${_USERNAME_}, ${_REPO_SLUG_}, ${_VENDORNAME_}, ${_CODENAME_}
+  - cd $HOME/twrp/ && git clone https://github.com/${_USERNAME_}/${_REPO_SLUG_}.git device/${_VENDORNAME_}/${_CODENAME_}
+  - rm -rf bootable/recovery && git clone https://github.com/omnirom/android_bootable_recovery -b android-9.0 --depth 1 bootable/recovery
+  - |
+    docker run --rm -i -e USER_ID=$(id -u) -e GROUP_ID=$(id -g) -v "$(pwd):/home/builder/twrp/:rw,z" -v "${HOME}/.ccache:/srv/ccache:rw,z" fr3akyphantom/droid-builder bash << EOF
+    cd /home/builder/twrp/
+    source build/envsetup.sh
+    # Choose build flavor as "eng" or "userdebug"
+    BUILD_FLAVOR="eng"
+    lunch omni_${_CODENAME_}-${BUILD_FLAVOR}
+    make -j$(nproc --all) recoveryimage
+    exit
+    EOF
+after_success:
+  - export version=$(cat bootable/recovery/variables.h | grep "define TW_MAIN_VERSION_STR" | cut -d '"' -f2)
+  - cp $HOME/twrp/out/target/product/${_CODENAME_}/recovery.img $HOME/twrp/TWRP-$version-${_CODENAME_}-$(date +"%Y%m%d")-Unofficial.img
+  - cd $HOME/twrp/
+  # Optional: You might need to switch from https://transfer.sh to https://file.io
+  # - curl -s --upload-file TWRP-$version-${_CODENAME_}-$(date +"%Y%m%d")-Unofficial.img https://transfer.sh/ && echo ""
 deploy:
   provider: releases
-  api_key:
-    secure: Y27fkgkVnS1+fQmjaqMpVeW1caFz/dZ25dpPivV10CWbpmLAY0VId2sdU5pCpdkEKcs+mgbOp0EXBmtTyn5Hcnik3tHcj77+pQBdS5+8Og/LM19TUlgGwLSCJpSpracKF1SaJA5x/gtR2YxlQtox7AWwhUJc/3BMfrpHy88PBgHt3Wzv1WiRoPr5H3pts59OTjADFRNzU96dVD2XAvGmMSsNO3cTNZwfrQpOnx30ho7dEWEhs6DpgPUjkTDCNvjlqIzhkuY0JAxnp1IC8VZ/kKxM+RByTI3FBvnSvntNdPYYOyV1Y3dVlXKTM25EtQh11lKyRBpAuWfnYrlTh4/1haB4PluE8ShAH0zu2/Z6UGdXWY66usdy7gVHGsh2haI+w8GhixSJu6OnK/21cAfvqR9JoJPGtdkjjzjzAMwNcFfYPu5GWV20QVBhdN12XnsCsDuFu3sgJGFiHgo3z49cUeF1rNbKhR26+y/1iB/c2XUJCwnIVYbX2UbQRLPixoCFrdS2IxHHFarX+LbYVHCpGCBUqJ1PrLmf7m9TLqDA+JRZZuyXz0LAliK2qRwfS2dO8aHyfkkyZ26YAe1SxBtMXY/cGImB4iJoEkFM1B/QDLGav+7N8blHFgSkBpan2DSocfgZUd6k/Cc9vSbVtanMRgAr0I4bOpPublG/DJetLl0=
-  name: ${RELEASE_NAME}
+  # The secret api_key will be loaded from the environment variables
+  token: $GitOAUTHToken
+  cleanup: false
   file_glob: true
-  file: /home/travis/twrp/out/target/product/spartan/recovery.img
-  skip_cleanup: true
+  file: $HOME/twrp/*.img
   on:
-    repo: N00bTree/solid-umbrella
-    branch: realme-spartan
+    tags: false # Set "true" to deploy only on successful tagged commit builds
+    repo: ${_USERNAME_}/${_REPO_SLUG_} # Optional: If you want to deploy on different repository
+    branch: master # Optional: Needs to be exact as the config branch
+branches:
+  only:
+    - master # Set travis builder branch(es) names
+  except:
+    - /^(?i:untagged)-.*$/
+    - /^v\d+\.\d+(\.\d+)?(-\S*)?$/
