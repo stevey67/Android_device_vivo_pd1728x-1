@@ -44,7 +44,3 @@ deploy:
   on:
     repo: steve4655/Android_device_vivo_pd1728x
     branch: main
-
-branches:
-  except:
-    - /^(?i:untagged)-.*$/
