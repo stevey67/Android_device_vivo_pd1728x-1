@@ -7,7 +7,7 @@ DEVICE_MANUFACTURER=vivo
 DEVICE_SOURCE=https://github.com/steve4655/Android_device_vivo_pd1728x.git
 DT_DIR=device/$DEVICE_MANUFACTURER/$DEVICE_CODE
 GIT_USER_NANE=steve4655
-GIT_USER_EMAIL=steve472@gmail.com
+GIT_USER_EMAIL=sauvik472@gmail.com
 GIT_COLOR_UI=false
 ###################################################################################
 git config --global user.name $GIT_USER_NANE
@@ -35,10 +35,10 @@ fi
 cd $WORKSPACE
 repo init --depth=1 -u $TWRP_SOURCE -b $TWRP_BRANCH
 repo sync >log 2>&1
-wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/android-9.0.0_r1/clang-4691093.tar.gz
+wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x64/+archive/android-9.0.0_r1/clang-4691093.tar.gz
 tar xvf clang-4691093.tar.gz
-mkdir -p prebuilts/clang/host/linux-x86/
-mv -rf clang-4691093 prebuilts/clang/host/linux-x86/
+mkdir -p prebuilts/clang/host/linux-x64/
+mv -rf clang-4691093 prebuilts/clang/host/linux-x64/
 
 if [ ! -d $DT_DIR ]; then
     echo "[I] Setting up device tree !"
