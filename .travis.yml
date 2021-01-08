@@ -35,7 +35,7 @@ before_deploy:
 deploy:
   provider: releases
   api_key:
-    secure: 5WfjnEMBOlqUzwGL8Evo2A
+    secure: 963ba8b7f8f596ce25362a587a1d21895787e6d7
   name: ${RELEASE_NAME}
   file_glob: true
   file: /home/travis/twrp/out/target/product/pd1728/recovery.img
