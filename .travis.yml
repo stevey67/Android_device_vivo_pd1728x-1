@@ -42,4 +42,4 @@ deploy:
   skip_cleanup: true
   on:
     repo: steve4655/Android_device_vivo_pd1728x
-    branch: vivo-pd1728
+    branch: main
